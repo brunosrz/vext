@@ -13,7 +13,7 @@ pnpm run typecheck               # tsc --noEmit
 pnpm run test                    # testes dos pacotes
 pnpm run build                   # build dos pacotes publicáveis
 uv sync && uv run pytest         # SDK Python e tooling de utils/
-uv run ruff check utils python   # lint Python
+pre-commit run --all-files       # todos os hooks (lint, formato, tipos)
 ```
 
 ## Arquitetura

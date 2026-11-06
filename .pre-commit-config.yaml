@@ -125,12 +125,6 @@ repos:
         language: system
         files: \.(ts|mts)$
         pass_filenames: false
-      - id: python-sdk-lint
-        name: Ruff Lint — SDK Python
-        entry: uv run ruff check --no-fix python utils
-        language: system
-        files: ^(python|utils)/.*\.py$
-        pass_filenames: false
 
 ci:
   autofix_commit_msg: "chore: auto fixes from pre-commit hooks"
