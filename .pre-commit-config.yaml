@@ -106,6 +106,13 @@ repos:
         additional_dependencies: ["prettier@3.9.9"]
         files: \.(ts|tsx|js|jsx|mjs|mts|cjs|json|md|yaml|yml|css)$
         types_or: [text]
+      - id: svgo
+        name: SVGO (format and optimize SVG)
+        entry: svgo --config svgo.config.mjs
+        # Versão fixa em ambiente isolado, igual ao prettier.
+        language: node
+        additional_dependencies: ["svgo@4.1.0"]
+        files: \.svg$
 
   - repo: https://github.com/rhysd/actionlint
     rev: v1.7.12
