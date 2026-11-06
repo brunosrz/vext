@@ -102,9 +102,12 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           registry-url: https://registry.npmjs.org
+          package-manager-cache: false
       - uses: pnpm/action-setup@v6
         with:
           version: ${{ env.PNPM_VERSION }}
+      - name: Install npm CLI with trusted publishing support
+        run: npm install --global npm@11.5.1
       - name: Install deps
         run: pnpm install --frozen-lockfile
       - name: Build
@@ -123,7 +126,19 @@ jobs:
         env:
           # Sem NPM_TOKEN o npm autentica por trusted publishing (OIDC).
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: pnpm --filter @vext/sdk publish --no-git-checks --access public --provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          pack_dir="$RUNNER_TEMP/vext-sdk-pack"
+          mkdir -p "$pack_dir"
+          pnpm --filter @vext/sdk pack --pack-destination "$pack_dir"
+          shopt -s nullglob
+          archives=("$pack_dir"/*.tgz)
+          test "${#archives[@]}" -eq 1 || {
+            echo "Expected exactly one @vext/sdk package archive, found ${#archives[@]}" >&2
+            exit 1
+          }
+          npm publish "${archives[0]}" --access public --provenance
 
   publish-pypi:
     name: Publish Python SDK (PyPI)
