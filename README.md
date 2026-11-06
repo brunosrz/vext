@@ -5,21 +5,21 @@ cumpre, os SDKs para escrevê-la e as extensões oficiais construídas sobre ele
 O host que carrega e isola as extensões vive no repositório do app; aqui ficam
 as partes que a comunidade usa para criar extensões.
 
-> Estado: alfa. Os pacotes `@vext/sdk` e `vectora-extension-sdk` começam em
+> Estado: alfa. Os pacotes `@vectora-ai/vext-sdk` e `vectora-extension-sdk` começam em
 > `0.0.1` apenas para registrar os nomes. Eles não oferecem uma API funcional;
 > não os use para construir extensões. O host e seus contratos seguem em
 > evolução e serão estabilizados antes de um SDK funcional.
 
 ## O que existe aqui
 
-| Parte              | Pasta           | Publicação                         | Linguagem   |
-| ------------------ | --------------- | ---------------------------------- | ----------- |
-| SDK TypeScript     | `packages/sdk/` | npm, `@vext/sdk`, com proveniência | TypeScript  |
-| SDK Python         | `python/`       | PyPI, `vectora-extension-sdk`      | Python      |
-| Extensões oficiais | `extensions/`   | artefatos `.vext` assinados        | TypeScript  |
-| Contrato           | `schemas/`      | versionado com os SDKs             | JSON Schema |
-| Documentação       | `docs/`         | publicada no site de documentação  | Markdown    |
-| Tooling de release | `utils/`        | não é publicado                    | Python      |
+| Parte              | Pasta           | Publicação                                    | Linguagem   |
+| ------------------ | --------------- | --------------------------------------------- | ----------- |
+| SDK TypeScript     | `packages/sdk/` | npm, `@vectora-ai/vext-sdk`, com proveniência | TypeScript  |
+| SDK Python         | `python/`       | PyPI, `vectora-extension-sdk`                 | Python      |
+| Extensões oficiais | `extensions/`   | artefatos `.vext` assinados                   | TypeScript  |
+| Contrato           | `schemas/`      | versionado com os SDKs                        | JSON Schema |
+| Documentação       | `docs/`         | publicada no site de documentação             | Markdown    |
+| Tooling de release | `utils/`        | não é publicado                               | Python      |
 
 Quando funcionais, os SDKs implementarão o mesmo contrato (manifesto da
 extensão e protocolo JSON-RPC entre extensão e host) e terão versões alinhadas.
