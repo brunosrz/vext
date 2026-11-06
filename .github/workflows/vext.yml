@@ -86,8 +86,8 @@ jobs:
       (github.event_name == 'push' &&
       contains(github.event.head_commit.message, 'chore(master): release ')))
     runs-on: ubuntu-24.04
-    # Os segredos e a confiança do npm vivem só no Environment "npm".
-    environment: npm
+    # Os publishers e segredos de release usam o Environment único.
+    environment: production
     concurrency:
       group: vext-publish-npm
       cancel-in-progress: false
@@ -135,7 +135,7 @@ jobs:
       (github.event_name == 'push' &&
       contains(github.event.head_commit.message, 'chore(master): release ')))
     runs-on: ubuntu-24.04
-    environment: pypi
+    environment: production
     concurrency:
       group: vext-publish-pypi
       cancel-in-progress: false
