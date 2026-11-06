@@ -1,0 +1,35 @@
+{
+  "name": "@vext/sdk",
+  "version": "0.0.1",
+  "description": "Alpha bootstrap for the future Vext extension SDK; no stable API yet.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vectora-ltda/vext.git",
+    "directory": "packages/sdk"
+  },
+  "type": "module",
+  "license": "Apache-2.0",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./sandbox": {
+      "types": "./dist/sandbox.d.ts",
+      "import": "./dist/sandbox.js"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "pnpm --filter @vext/json-rpc run build && tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@vext/json-rpc": "workspace:^"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}

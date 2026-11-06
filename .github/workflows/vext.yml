@@ -9,8 +9,9 @@ name: Vext
 # release-please.yml (tags e releases criadas com o GITHUB_TOKEN não iniciam
 # outros workflows).
 #
-# Os dois SDKs saem sempre na mesma versão. A publicação usa trusted publishing
-# (OIDC) no npm e no PyPI; NPM_TOKEN é só um fallback para o npm.
+# Os dois SDKs saem sempre na mesma versão. O bootstrap 0.0.1 não contém API
+# utilizável. A publicação usa OIDC no PyPI e proveniência no npm; NPM_TOKEN
+# pode ser necessário para criar o primeiro pacote npm.
 
 on:
   push:
@@ -77,18 +78,16 @@ jobs:
   publish-npm:
     name: Publish TypeScript SDK (npm)
     needs: [verify, verify-python]
-    # workflow_dispatch permite repetir a publicação pela aba Actions; o
-    # github.ref fica travado em master para um disparo manual de outra
-    # branch nunca publicar. O pnpm ignora versões que já estão no npm, então
-    # repetir é seguro.
+    # workflow_dispatch permite publicar o bootstrap a partir de master; uma
+    # execução manual em outra branch nunca publica.
     if: >-
       github.ref == 'refs/heads/master' &&
       (github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'push' &&
       contains(github.event.head_commit.message, 'chore(master): release ')))
     runs-on: ubuntu-24.04
-    # Os segredos e a confiança do npm vivem só no Environment "npm".
-    environment: npm
+    # Os publishers e segredos de release usam o Environment único.
+    environment: production
     concurrency:
       group: vext-publish-npm
       cancel-in-progress: false
@@ -110,15 +109,25 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Build
         run: pnpm run build
-      - name: Publish packages with provenance
+      - name: Verify SDK versions match
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm_version="$(node -p "require('./packages/sdk/package.json').version")"
+          python_version="$(python -c 'import tomllib; print(tomllib.load(open("python/pyproject.toml", "rb"))["project"]["version"])')"
+          test "$npm_version" = "$python_version" || {
+            echo "SDK versions diverge: npm=$npm_version PyPI=$python_version" >&2
+            exit 1
+          }
+      - name: Publish TypeScript SDK with provenance
         env:
           # Sem NPM_TOKEN o npm autentica por trusted publishing (OIDC).
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: pnpm -r publish --no-git-checks --access public --provenance
+        run: pnpm --filter @vext/sdk publish --no-git-checks --access public --provenance
 
   publish-pypi:
     name: Publish Python SDK (PyPI)
-    needs: [verify, verify-python]
+    needs: [publish-npm]
     if: >-
       vars.PUBLISH_PYPI == 'true' &&
       github.ref == 'refs/heads/master' &&
@@ -126,7 +135,7 @@ jobs:
       (github.event_name == 'push' &&
       contains(github.event.head_commit.message, 'chore(master): release ')))
     runs-on: ubuntu-24.04
-    environment: pypi
+    environment: production
     concurrency:
       group: vext-publish-pypi
       cancel-in-progress: false
@@ -155,9 +164,10 @@ jobs:
     # O PyPI é opcional: só a publicação no npm é obrigatória para a tag sair.
     if: >-
       !cancelled() &&
-      github.event_name == 'push' &&
       github.ref == 'refs/heads/master' &&
-      contains(github.event.head_commit.message, 'chore(master): release ') &&
+      (github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' &&
+      contains(github.event.head_commit.message, 'chore(master): release '))) &&
       needs.publish-npm.result == 'success' &&
       contains(fromJSON('["success", "skipped"]'), needs.publish-pypi.result)
     runs-on: ubuntu-24.04
@@ -178,7 +188,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          version="$(node -p "require('./package.json').version")"
+          version="$(node -p "require('./packages/sdk/package.json').version")"
           test -n "$version"
           echo "value=$version" >> "$GITHUB_OUTPUT"
           echo "tag=v$version" >> "$GITHUB_OUTPUT"

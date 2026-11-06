@@ -5,23 +5,26 @@ cumpre, os SDKs para escrevê-la e as extensões oficiais construídas sobre ele
 O host que carrega e isola as extensões vive no repositório do app; aqui ficam
 as partes que a comunidade usa para criar extensões.
 
-> Estado: alfa. O contrato e as APIs públicas ainda mudam entre versões menores
-> até a 1.0.
+> Estado: alfa. Os pacotes `@vext/sdk` e `vectora-extension-sdk` começam em
+> `0.0.1` apenas para registrar os nomes. Eles não oferecem uma API funcional;
+> não os use para construir extensões. O host e seus contratos seguem em
+> evolução e serão estabilizados antes de um SDK funcional.
 
 ## O que existe aqui
 
-| Parte              | Pasta         | Publicação                                 | Linguagem   |
-| ------------------ | ------------- | ------------------------------------------ | ----------- |
-| SDK TypeScript     | `packages/`   | npm, no escopo `@vext/*`, com proveniência | TypeScript  |
-| SDK Python         | `python/`     | PyPI, `vectora-extension-sdk`              | Python      |
-| Extensões oficiais | `extensions/` | artefatos `.vext` assinados                | TypeScript  |
-| Contrato           | `schemas/`    | versionado com os SDKs                     | JSON Schema |
-| Documentação       | `docs/`       | publicada no site de documentação          | Markdown    |
-| Tooling de release | `utils/`      | não é publicado                            | Python      |
+| Parte              | Pasta           | Publicação                         | Linguagem   |
+| ------------------ | --------------- | ---------------------------------- | ----------- |
+| SDK TypeScript     | `packages/sdk/` | npm, `@vext/sdk`, com proveniência | TypeScript  |
+| SDK Python         | `python/`       | PyPI, `vectora-extension-sdk`      | Python      |
+| Extensões oficiais | `extensions/`   | artefatos `.vext` assinados        | TypeScript  |
+| Contrato           | `schemas/`      | versionado com os SDKs             | JSON Schema |
+| Documentação       | `docs/`         | publicada no site de documentação  | Markdown    |
+| Tooling de release | `utils/`        | não é publicado                    | Python      |
 
-Os dois SDKs implementam o mesmo contrato (manifesto da extensão e protocolo
-JSON-RPC entre extensão e host) e têm a mesma versão: uma tag `vX.Y.Z` publica
-o SDK TypeScript no npm e o SDK Python no PyPI.
+Quando funcionais, os SDKs implementarão o mesmo contrato (manifesto da
+extensão e protocolo JSON-RPC entre extensão e host) e terão versões alinhadas.
+O bootstrap `0.0.1` não implementa esse contrato; a publicação funcional depende
+da estabilização do host no Vectora.
 
 ## Como uma extensão funciona
 
