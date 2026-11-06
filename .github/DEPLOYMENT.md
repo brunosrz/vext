@@ -28,31 +28,29 @@ approve pull requests`).
   `.github/release-lines.json`. Ela precisa existir de antemão; depois da
   primeira release minor a rotação passa a criar a próxima sozinha.
 
-Crie os GitHub Environments com estes nomes exatos:
-
-- `npm` — obrigatório; usado por `publish-npm`. Guarde nele `NPM_TOKEN` para
-  criar o pacote inicial, se necessário. Depois da configuração de trusted
-  publishing, remova o token.
-- `pypi` — usado por `publish-pypi` quando `PUBLISH_PYPI=true`; configure-o
-  como Environment do trusted publisher no PyPI. Não precisa de token secreto.
+Crie um único GitHub Environment chamado `production` em Settings →
+Environments. Os jobs `publish-npm` e `publish-pypi` usam esse Environment.
+Guarde nele `NPM_TOKEN` para criar o pacote inicial, se necessário. Depois da
+configuração de trusted publishing no npm, remova o token. O PyPI usa o mesmo
+Environment `production` como parte da identidade do trusted publisher e não
+precisa de token secreto.
 
 ## Publicação
 
-**npm (obrigatória).** O workflow usa o Environment `npm` e publica apenas
+**npm (obrigatória).** O workflow usa o Environment `production` e publica apenas
 `@vext/sdk` com proveniência. Para o bootstrap inicial, se trusted publishing
 não puder criar o pacote ainda inexistente, cadastre `NPM_TOKEN` como secret
 desse Environment, usando um token granular de publicação. Configure depois o
 trusted publisher do npm para este repositório, workflow `vext.yml` e
-Environment `npm`; então remova o token.
+Environment `production`; então remova o token.
 
 **PyPI (opcional).** Cadastre o repositório como publisher confiável do projeto
-no PyPI, com o Environment `pypi`, e defina a variável de repositório
+no PyPI, com o Environment `production`, e defina a variável de repositório
 `PUBLISH_PYPI=true`. Sem a variável, o job é pulado e a tag sai só com o npm.
 
 ## Secrets e variáveis
 
-- Environment `npm`: `NPM_TOKEN` (necessário para bootstrap se OIDC não criar o pacote)
-- Environment `pypi`: nenhum, o PyPI autentica por OIDC
+- Environment `production`: `NPM_TOKEN` (necessário para bootstrap se OIDC não criar o pacote)
 - Variável de repositório: `PUBLISH_PYPI`
 - `SNYK_TOKEN` (opcional): habilita a varredura do Snyk quando o workflow
   correspondente existir
