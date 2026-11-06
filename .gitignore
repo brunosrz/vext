@@ -29,4 +29,6 @@ __pycache__/
 .DS_Store
 Thumbs.db
 .claude/
+
+# Saída dos testes dos pacotes
 .test-dist/

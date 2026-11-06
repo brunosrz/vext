@@ -18,10 +18,102 @@ importers:
         specifier: 5.9.3
         version: 5.9.3
 
+  extensions/dev-containers: {}
+
+  extensions/docker: {}
+
+  extensions/eslint: {}
+
+  extensions/figma: {}
+
+  extensions/github: {}
+
+  extensions/gitlab: {}
+
+  extensions/google-drive: {}
+
+  extensions/graphql: {}
+
+  extensions/jupyter: {}
+
+  extensions/kubernetes: {}
+
+  extensions/openapi: {}
+
+  extensions/oxlint: {}
+
+  extensions/playwright: {}
+
+  extensions/pre-commit: {}
+
+  extensions/prettier: {}
+
+  extensions/pyright: {}
+
+  extensions/rest-client: {}
+
+  extensions/ruff: {}
+
+  extensions/sqlite-viewer: {}
+
+  extensions/ty: {}
+
+  packages/auth:
+    devDependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
+  packages/cache:
+    devDependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
+  packages/diagnostics:
+    devDependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
+  packages/json-rpc:
+    devDependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
+  packages/process:
+    devDependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
   packages/sdk:
+    dependencies:
+      '@vext/json-rpc':
+        specifier: workspace:^
+        version: link:../json-rpc
     devDependencies:
       typescript:
         specifier: 5.9.3
+        version: 5.9.3
+
+  packages/test:
+    devDependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
+  packages/ui:
+    devDependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
+  packages/workspace:
+    devDependencies:
+      typescript:
+        specifier: ^5.0.0
         version: 5.9.3
 
 packages:

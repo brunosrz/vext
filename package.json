@@ -15,7 +15,8 @@
   "scripts": {
     "typecheck": "pnpm -r --if-present run typecheck",
     "test": "pnpm -r --if-present run test",
-    "build": "pnpm -r --if-present run build"
+    "build": "pnpm -r --if-present run build",
+    "validate:manifests": "node utils/validate-manifests.mjs"
   },
   "devDependencies": {
     "@types/node": "24.10.1",

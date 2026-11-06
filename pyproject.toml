@@ -16,7 +16,8 @@ dev = ["pytest>=9.1.1", "ruff>=0.15.18"]
 package = false
 
 [tool.pytest.ini_options]
-testpaths = ["utils"]
+testpaths = ["utils", "python/tests"]
+pythonpath = ["python/src"]
 addopts = "-q"
 
 [tool.ruff]
