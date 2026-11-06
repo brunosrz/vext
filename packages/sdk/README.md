@@ -1,4 +1,4 @@
-# `@vext/sdk`
+# `@vectoraai/vext-sdk`
 
 **Alpha bootstrap (`0.0.1`). This package does not provide a usable extension
 API.** It reserves the package name while the Vectora host and extension

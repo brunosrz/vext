@@ -2,13 +2,13 @@
 
 ## Pipeline (`vext.yml`, workflow `Vext`)
 
-| Job             | Quando roda                                                 | O que faz                                           |
-| --------------- | ----------------------------------------------------------- | --------------------------------------------------- |
-| `verify`        | todo PR e todo push                                         | typecheck, testes, build e validação dos manifestos |
-| `verify-python` | todo PR e todo push                                         | testes do SDK Python e do tooling, e build do SDK   |
-| `publish-npm`   | push em `master` de um commit de release, ou disparo manual | publica `@vext/sdk` no npm, com proveniência        |
-| `publish-pypi`  | os mesmos, com a variável `PUBLISH_PYPI` igual a `true`     | publica o SDK Python no PyPI                        |
-| `tag-release`   | depois do `publish-npm` e do `publish-pypi` (se não pulado) | tag, GitHub Release e rotação das linhas            |
+| Job             | Quando roda                                                 | O que faz                                              |
+| --------------- | ----------------------------------------------------------- | ------------------------------------------------------ |
+| `verify`        | todo PR e todo push                                         | typecheck, testes, build e validação dos manifestos    |
+| `verify-python` | todo PR e todo push                                         | testes do SDK Python e do tooling, e build do SDK      |
+| `publish-npm`   | push em `master` de um commit de release, ou disparo manual | publica `@vectoraai/vext-sdk` no npm, com proveniência |
+| `publish-pypi`  | os mesmos, com a variável `PUBLISH_PYPI` igual a `true`     | publica o SDK Python no PyPI                           |
+| `tag-release`   | depois do `publish-npm` e do `publish-pypi` (se não pulado) | tag, GitHub Release e rotação das linhas               |
 
 A tag só sai depois de a publicação npm passar e a publicação PyPI passar ou
 ser explicitamente desabilitada. Os SDKs compartilham a mesma versão. O primeiro
@@ -38,7 +38,7 @@ precisa de token secreto.
 ## Publicação
 
 **npm (obrigatória).** O workflow usa o Environment `production` e publica apenas
-`@vext/sdk` com proveniência. Para o bootstrap inicial, se trusted publishing
+`@vectoraai/vext-sdk` com proveniência. Para o bootstrap inicial, se trusted publishing
 não puder criar o pacote ainda inexistente, cadastre `NPM_TOKEN` como secret
 desse Environment, usando um token granular de publicação. Configure depois o
 trusted publisher do npm para este repositório, workflow `vext.yml` e

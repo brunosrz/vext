@@ -131,11 +131,11 @@ jobs:
           set -euo pipefail
           pack_dir="$RUNNER_TEMP/vext-sdk-pack"
           mkdir -p "$pack_dir"
-          pnpm --filter @vext/sdk pack --pack-destination "$pack_dir"
+          pnpm --filter @vectoraai/vext-sdk pack --pack-destination "$pack_dir"
           shopt -s nullglob
           archives=("$pack_dir"/*.tgz)
           test "${#archives[@]}" -eq 1 || {
-            echo "Expected exactly one @vext/sdk package archive, found ${#archives[@]}" >&2
+            echo "Expected exactly one @vectoraai/vext-sdk package archive, found ${#archives[@]}" >&2
             exit 1
           }
           npm publish "${archives[0]}" --access public --provenance
