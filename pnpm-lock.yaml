@@ -18,10 +18,62 @@ importers:
         specifier: 5.9.3
         version: 5.9.3
 
+  packages/auth:
+    devDependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
+  packages/cache:
+    devDependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
+  packages/diagnostics:
+    devDependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
+  packages/json-rpc:
+    devDependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
+  packages/process:
+    devDependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
   packages/sdk:
+    dependencies:
+      '@vext/json-rpc':
+        specifier: workspace:^
+        version: link:../json-rpc
     devDependencies:
       typescript:
         specifier: 5.9.3
+        version: 5.9.3
+
+  packages/test:
+    devDependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
+  packages/ui:
+    devDependencies:
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.3
+
+  packages/workspace:
+    devDependencies:
+      typescript:
+        specifier: ^5.0.0
         version: 5.9.3
 
 packages:
