@@ -1,5 +1,5 @@
 {
-  "name": "@vectoraai/vext-sdk",
+  "name": "@vectora-ai/vext-sdk",
   "version": "0.0.1",
   "description": "Alpha bootstrap for the future Vext extension SDK; no stable API yet.",
   "repository": {
