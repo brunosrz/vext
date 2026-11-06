@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/vectora-ltda/vext/security/advisories/new
+    about: Report vulnerabilities privately. Do not open a public issue.
+  - name: Support (email)
+    url: mailto:support@vectora.company
+    about: For billing, licensing, or account issues — email us directly.
+  - name: Docs
+    url: https://docs.vectora.company
+    about: Check the documentation first — your question may already be answered.

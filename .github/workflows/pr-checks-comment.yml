@@ -1,0 +1,78 @@
+name: PR Checks Comment
+
+# Companheiro de pr-checks.yml::no-plan-metadata. Comentar no PR exige
+# `pull-requests: write`, mas o job que processa título/corpo do PR (dado
+# potencialmente hostil, ex. fork) nunca pode carregar esse token com
+# permissão de escrita — em fork o GitHub já reduz pra leitura mesmo se o
+# workflow pedir mais, mas a separação aqui é por design: validação sem
+# escrita num job, comentário disparado à parte via `workflow_run` (roda no
+# contexto do branch base, token confiável) só depois que a validação
+# terminou.
+
+on:
+  workflow_run:
+    workflows: ["PR Checks"]
+    types: [completed]
+
+permissions:
+  actions: read
+  pull-requests: write
+
+jobs:
+  comment:
+    if: github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Verifica se a validação subiu o número do PR reprovado
+        id: find
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const { data } = await github.rest.actions.listWorkflowRunArtifacts({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.payload.workflow_run.id,
+            });
+            core.setOutput(
+              "found",
+              data.artifacts.some((artifact) => artifact.name === "no-plan-metadata-failure"),
+            );
+      - name: Baixa o número do PR reprovado
+        if: steps.find.outputs.found == 'true'
+        uses: actions/download-artifact@v8
+        with:
+          name: no-plan-metadata-failure
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Comenta no PR
+        if: steps.find.outputs.found == 'true'
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const fs = require("fs");
+            const prNumber = parseInt(fs.readFileSync("pr-number.txt", "utf8").trim(), 10);
+            if (!Number.isInteger(prNumber) || prNumber <= 0) {
+              core.setFailed("pr-number.txt não contém um número de PR válido.");
+              return;
+            }
+            const message = [
+              "**Título/descrição do PR com proveniência de processo**",
+              "",
+              "Título e descrição não podem referenciar Sprint/Bloco/Fase nem ferramenta/revisor de IA (CodeRabbit, Claude, Copilot, etc), a mesma regra dos comentários de código (AGENTS.md, padrões de engenharia).",
+              "",
+              "Descreva só o que a mudança faz; o histórico de planejamento fica na issue ou na discussão apropriada.",
+            ].join("\n");
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+            });
+            const already = comments.some((c) => c.body === message);
+            if (!already) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: message,
+              });
+            }

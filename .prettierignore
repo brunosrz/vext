@@ -1,0 +1,8 @@
+# Artefatos gerados
+**/dist/
+**/build/
+coverage/
+
+# Lockfiles são gerados pelo gerenciador de pacotes
+pnpm-lock.yaml
+uv.lock

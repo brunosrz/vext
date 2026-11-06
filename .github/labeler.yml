@@ -1,0 +1,32 @@
+ci:
+  - changed-files:
+      - any-glob-to-any-file:
+          - ".github/**"
+          - "utils/**"
+sdk-typescript:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "packages/**"
+          - "pnpm-workspace.yaml"
+          - "tsconfig*.json"
+sdk-python:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "python/**"
+          - "pyproject.toml"
+          - "uv.lock"
+extensions:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "extensions/**"
+schemas:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "schemas/**"
+tests:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "**/test/**"
+          - "**/tests/**"
+          - "**/*.test.ts"
+          - "**/test_*.py"

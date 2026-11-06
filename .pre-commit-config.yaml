@@ -1,0 +1,140 @@
+default_language_version:
+  python: python3
+  node: "26.13.0"
+
+default_stages: [pre-commit]
+minimum_pre_commit_version: 4.0.0
+
+exclude: |
+  (?x)^(
+    \.git/.*|
+    .*\.pdf$|
+    .*\.lock$|
+    .*pnpm-lock\.yaml|
+    coverage\..*|
+    \.env.*|
+    (^|/)node_modules/.*|
+    (^|/)\.venv/.*|
+    (^|/)dist/.*|
+    (^|/)build/.*|
+    (^|/)coverage/.*|
+    (^|/)\.pytest_cache/.*|
+    (^|/)__pycache__/.*
+  )$
+
+repos:
+  # ==========================================================================
+  # Base compartilhada com os demais repositórios do ecossistema Vectora.
+  # Tudo que é Python roda via `uv run`; o Node dos hooks vem de
+  # default_language_version.
+  # ==========================================================================
+  - repo: https://github.com/astral-sh/uv-pre-commit
+    rev: 0.11.27
+    hooks:
+      - id: uv-lock
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        name: Trim Trailing Whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+        name: Fix End of File
+      - id: check-yaml
+        name: Validate YAML
+        args: ["--allow-multiple-documents", "--unsafe"]
+      - id: check-json
+        name: Validate JSON
+        exclude: tsconfig.*\.json$
+      - id: check-toml
+        name: Validate TOML
+      - id: check-merge-conflict
+        name: Check for Merge Conflicts
+      - id: check-added-large-files
+        name: Check for Large Files
+        args: ["--maxkb=5000"]
+      - id: detect-private-key
+        name: Detect Private Keys
+
+  - repo: local
+    hooks:
+      - id: compileall
+        name: Python Syntax (compileall)
+        entry: uv run python -m compileall -q -j0
+        language: system
+        types: [python]
+      - id: removed-path-references
+        name: Check references to removed or renamed paths
+        entry: uv run python utils/checks.py removed-paths
+        language: system
+        always_run: true
+        pass_filenames: false
+      - id: no-plan-comments
+        name: Sem Sprint/Bloco/Fase ou menção a ferramenta de IA em código
+        entry: uv run python utils/checks.py no-plan --changed
+        language: system
+        files: \.(py|ts|tsx|js|jsx|mts)$
+        exclude: ^utils/(checks|test_checks)\.py$
+      - id: release-lines-config
+        name: Validate release line configuration
+        entry: uv run python utils/release.py line master
+        language: system
+        files: ^\.github/release-lines\.json$
+        pass_filenames: false
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.20
+    hooks:
+      - id: ruff
+        name: Ruff Lint (Python)
+        args: [--fix, --select, I]
+        files: \.py$
+      - id: ruff-format
+        name: Ruff Format (Python)
+        files: \.py$
+
+  - repo: local
+    hooks:
+      - id: prettier
+        name: Prettier
+        entry: prettier --write
+        # `language: node` com versão fixa: o pre-commit cria um ambiente
+        # isolado com esse prettier exato (o mesmo do package.json), igual
+        # para qualquer cliente git (terminal, GitHub Desktop, VS Code, CI).
+        language: node
+        additional_dependencies: ["prettier@3.9.9"]
+        files: \.(ts|tsx|js|jsx|mjs|mts|cjs|json|md|yaml|yml|css)$
+        types_or: [text]
+
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.7.12
+    hooks:
+      - id: actionlint
+        name: Lint GitHub Actions workflows
+        files: ^\.github/workflows/.*\.ya?ml$
+
+  # ==========================================================================
+  # Específicos deste repositório
+  # ==========================================================================
+  - repo: local
+    hooks:
+      - id: tsc
+        name: Type Check — TypeScript (pnpm run typecheck)
+        entry: pnpm run typecheck
+        language: system
+        files: \.(ts|mts)$
+        pass_filenames: false
+      - id: python-sdk-lint
+        name: Ruff Lint — SDK Python
+        entry: uv run ruff check --no-fix python utils
+        language: system
+        files: ^(python|utils)/.*\.py$
+        pass_filenames: false
+
+ci:
+  autofix_commit_msg: "chore: auto fixes from pre-commit hooks"
+  autofix_prs: false
+  autoupdate_branch: ""
+  skip: []
+  submodules: false

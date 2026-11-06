@@ -1,0 +1,11 @@
+{
+  "version_files": ["package.json"],
+  "development": {
+    "branch": "release/0.2",
+    "milestone": "0.2"
+  },
+  "maintenance": {
+    "branch": "master",
+    "milestone": "0.1.x"
+  }
+}

@@ -1,0 +1,335 @@
+name: Release Please
+
+# Cada linha de release é calculada a partir do branch confiável. A PR de
+# release atualiza os arquivos de versão e o changelog listados em
+# .github/release-lines.json; a tag só é criada pelo job tag-release de
+# vext.yml depois que os pacotes são publicados com sucesso. Esse job
+# dispara este workflow por workflow_dispatch (tags e releases criadas com
+# o GITHUB_TOKEN não iniciam outros workflows) para preparar a próxima
+# versão.
+
+on:
+  push:
+    branches:
+      - master
+      - "release/**"
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+concurrency:
+  group: release-please-${{ github.repository }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  release-please:
+    # O push que mescla uma PR de release não gera outra: a próxima versão é
+    # preparada quando o tag-release termina o deploy e dispara este workflow.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' &&
+      (startsWith(github.ref, 'refs/tags/v') ||
+      !contains(github.event.head_commit.message, 'chore(master): release ')))
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Load release line configuration
+        id: release-lines
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ startsWith(github.ref, 'refs/tags/v') && github.event.repository.default_branch || github.ref_name }}
+          token: ${{ github.token }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Select configured release line
+        id: release-line
+        shell: bash
+        env:
+          TARGET_BRANCH: ${{ startsWith(github.ref, 'refs/tags/v') && github.event.repository.default_branch || github.ref_name }}
+        run: |
+          set -euo pipefail
+          if [[ ! -f .github/release-lines.json ]]; then
+            echo "Release-line configuration is not present on the trusted default branch; skipping."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          jq -e '
+            (.development.branch | type == "string" and length > 0) and
+            (.maintenance.branch | type == "string" and length > 0) and
+            (.development.milestone | type == "string" and length > 0) and
+            (.maintenance.milestone | type == "string" and length > 0) and
+            (.development.branch != .maintenance.branch)
+          ' .github/release-lines.json >/dev/null
+          development_branch="$(jq -er '.development.branch' .github/release-lines.json)"
+          maintenance_branch="$(jq -er '.maintenance.branch' .github/release-lines.json)"
+          development_milestone="$(jq -er '.development.milestone' .github/release-lines.json)"
+          maintenance_milestone="$(jq -er '.maintenance.milestone' .github/release-lines.json)"
+          release_milestone=""
+          if [[ "$TARGET_BRANCH" == "$development_branch" ]]; then
+            line_key="development"
+            release_milestone="$development_milestone"
+          elif [[ "$TARGET_BRANCH" == "$maintenance_branch" ]]; then
+            line_key="maintenance"
+            release_milestone="$maintenance_milestone"
+          else
+            line_key=""
+          fi
+          if [[ -n "$line_key" ]]; then
+            # As duas linhas publicam a release na linha de manutenção.
+            release_target_branch="$maintenance_branch"
+            version_files="$(jq -er '.version_files | if type == "array" and length > 0 and all(.[]; type == "string" and length > 0) then join(" ") else error("version_files inválido") end' .github/release-lines.json)"
+            pr_milestone="$maintenance_milestone"
+            for file in $version_files; do
+              if [[ "$file" == /* || "$file" == *..* ]]; then
+                echo "::error::Arquivos de versão devem ser relativos e não podem subir diretórios: $file" >&2
+                exit 1
+              fi
+              test -f "$file" || { echo "::error::Arquivo de versão ausente: $file" >&2; exit 1; }
+            done
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            version_files=""
+            release_target_branch=""
+            pr_milestone=""
+          fi
+          {
+            echo "development_branch=$development_branch"
+            echo "maintenance_branch=$maintenance_branch"
+            echo "development_milestone=$development_milestone"
+            echo "maintenance_milestone=$maintenance_milestone"
+            echo "version_files=$version_files"
+            echo "release_target_branch=$release_target_branch"
+            echo "release_milestone=$release_milestone"
+            echo "pr_milestone=$pr_milestone"
+          } >> "$GITHUB_OUTPUT"
+          if [[ "$(grep '^enabled=' "$GITHUB_OUTPUT" | tail -n 1)" == "enabled=false" ]]; then
+            echo "Skipping release-please on unconfigured branch $TARGET_BRANCH."
+          fi
+      - uses: ./.github/actions/setup-uv
+        if: steps.release-line.outputs.enabled == 'true'
+        with:
+          python-version: "3.13"
+          all-extras: "false"
+          working-directory: .
+      - name: Ensure release label exists
+        if: steps.release-line.outputs.enabled == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create "autorelease: pending" \
+            --repo "$GITHUB_REPOSITORY" \
+            --color "0E8A16" \
+            --description "Release PR awaiting merge" \
+            --force
+      - name: Check for merged release candidates
+        id: release-candidates
+        if: steps.release-line.outputs.enabled == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_BRANCH: ${{ startsWith(github.ref, 'refs/tags/v') && github.event.repository.default_branch || github.ref_name }}
+          DEVELOPMENT_MILESTONE: ${{ steps.release-line.outputs.development_milestone }}
+          MAINTENANCE_MILESTONE: ${{ steps.release-line.outputs.maintenance_milestone }}
+          RELEASE_MILESTONE: ${{ steps.release-line.outputs.release_milestone }}
+          VERSION_FILES: ${{ steps.release-line.outputs.version_files }}
+          CANDIDATE_BASE_BRANCH: ${{ startsWith(github.ref, 'refs/tags/v') && github.event.repository.default_branch || github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git fetch --tags --force origin
+          read -r -a release_files <<< "$VERSION_FILES"
+          current_version="$(uv run python utils/release.py plan --print-current-version --files "${release_files[@]}")"
+          release_major_minor="${current_version%.*}"
+          latest_tag="$(git tag --merged "origin/$TARGET_BRANCH" --list "v${release_major_minor}.*" --sort=-version:refname | head -n 1)"
+          if [[ -n "$latest_tag" ]]; then
+            latest_tag_epoch="$(git show -s --format=%ct "$latest_tag")"
+          else
+            release_commit="$(git log -1 --format=%H "origin/$TARGET_BRANCH" --fixed-strings --grep="chore(master): release $current_version")"
+            if [[ -n "$release_commit" ]]; then
+              latest_tag_epoch="$(git show -s --format=%ct "$release_commit")"
+            else
+              latest_tag_epoch=0
+            fi
+          fi
+          prs="$(gh pr list --repo "$GITHUB_REPOSITORY" --base "$CANDIDATE_BASE_BRANCH" --state merged --limit 100 --json milestone,labels,mergedAt)"
+          has_candidates="$(jq -r --arg milestone "$RELEASE_MILESTONE" --argjson latest_tag_epoch "$latest_tag_epoch" '
+            any(.[]; (.milestone.title? == $milestone) and (.mergedAt != null) and ((.mergedAt | fromdateiso8601) > $latest_tag_epoch) and (([.labels[].name] | index("autorelease: pending")) == null))
+          ' <<< "$prs")"
+          echo "has_candidates=$has_candidates" >> "$GITHUB_OUTPUT"
+      - name: Build canonical release plan
+        if: steps.release-line.outputs.enabled == 'true' && steps.release-candidates.outputs.has_candidates == 'true'
+        id: release-plan
+        env:
+          TARGET_BRANCH: ${{ startsWith(github.ref, 'refs/tags/v') && github.event.repository.default_branch || github.ref_name }}
+          RELEASE_MILESTONE: ${{ steps.release-line.outputs.release_milestone }}
+          DEVELOPMENT_BRANCH: ${{ steps.release-line.outputs.development_branch }}
+          MAINTENANCE_BRANCH: ${{ steps.release-line.outputs.maintenance_branch }}
+          VERSION_FILES: ${{ steps.release-line.outputs.version_files }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "$TARGET_BRANCH" == "$DEVELOPMENT_BRANCH" || "$TARGET_BRANCH" == "$MAINTENANCE_BRANCH" ]]; then
+            source_ref="origin/$TARGET_BRANCH"
+          else
+            echo "Skipping unconfigured source branch $TARGET_BRANCH."
+            exit 0
+          fi
+          read -r -a release_files <<< "$VERSION_FILES"
+          current_version="$(uv run python utils/release.py plan --print-current-version --files "${release_files[@]}")"
+          release_major_minor="${current_version%.*}"
+          latest_tag="$(git tag --merged "$source_ref" --list "v${release_major_minor}.*" --sort=-version:refname | head -n 1)"
+          if [[ -n "$latest_tag" ]]; then
+            git log --format='%s%x1f%b%x1e' "$latest_tag..$source_ref" | jq -R -s 'split("\u001e") | map(select(length > 0)) | map({subject: (split("\u001f")[0]), body: (split("\u001f")[1] // "")})' > "$RUNNER_TEMP/release-commits.json"
+          else
+            release_commit="$(git log -1 --format=%H "$source_ref" --fixed-strings --grep="chore(master): release $current_version")"
+            if [[ -n "$release_commit" ]]; then
+              git log --format='%s%x1f%b%x1e' "$release_commit..$source_ref" | jq -R -s 'split("\u001e") | map(select(length > 0)) | map({subject: (split("\u001f")[0]), body: (split("\u001f")[1] // "")})' > "$RUNNER_TEMP/release-commits.json"
+            else
+              git log --format='%s%x1f%b%x1e' "$source_ref" | jq -R -s 'split("\u001e") | map(select(length > 0)) | map({subject: (split("\u001f")[0]), body: (split("\u001f")[1] // "")})' > "$RUNNER_TEMP/release-commits.json"
+            fi
+          fi
+          if [[ ! "$current_version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Versão inválida nos arquivos de versão: $current_version" >&2
+            exit 1
+          fi
+          bump_args=()
+          if [[ "$RELEASE_MILESTONE" == *.x ]]; then
+            bump_args=(--bump-patch-for-minor-pre-major)
+          fi
+          uv run python utils/release.py plan \
+            --current-version "$current_version" \
+            --commits-json "$RUNNER_TEMP/release-commits.json" \
+            --files "${release_files[@]}" \
+            "${bump_args[@]}" > "$RUNNER_TEMP/release-plan.json"
+          next_version="$(jq -er '.next_version' "$RUNNER_TEMP/release-plan.json")"
+          bump="$(jq -er '.bump' "$RUNNER_TEMP/release-plan.json")"
+          if [[ "$bump" == "none" ]]; then
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [[ "$TARGET_BRANCH" == "$DEVELOPMENT_BRANCH" ]]; then
+            release_branch="$TARGET_BRANCH"
+          else
+            release_branch="release/$next_version"
+          fi
+          if [[ "$release_branch" == *release-please--* || "$release_branch" == *--branches--* || "$release_branch" == *--components--* ]]; then
+            echo "::error::Ref de release inválida: $release_branch" >&2
+            exit 1
+          fi
+          {
+            echo "enabled=true"
+            echo "branch=$release_branch"
+            echo "version=$next_version"
+            echo "current_version=$current_version"
+            echo "target_branch=$TARGET_BRANCH"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create canonical release branch
+        if: steps.release-plan.outputs.enabled == 'true'
+        env:
+          RELEASE_BRANCH: ${{ steps.release-plan.outputs.branch }}
+          SOURCE_SHA: ${{ github.sha }}
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh api "/repos/$GITHUB_REPOSITORY/git/ref/heads/$RELEASE_BRANCH" >/dev/null 2>&1; then
+            echo "Canonical branch $RELEASE_BRANCH already exists."
+          else
+            git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+            git push origin "$SOURCE_SHA:refs/heads/$RELEASE_BRANCH"
+          fi
+
+      - name: Check out canonical release branch
+        if: steps.release-plan.outputs.enabled == 'true'
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.release-plan.outputs.branch }}
+          token: ${{ github.token }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Apply release files
+        if: steps.release-plan.outputs.enabled == 'true'
+        env:
+          RELEASE_MILESTONE: ${{ steps.release-line.outputs.release_milestone }}
+          PLAN_CURRENT_VERSION: ${{ steps.release-plan.outputs.current_version }}
+          RELEASE_BRANCH: ${{ steps.release-plan.outputs.branch }}
+          TARGET_BRANCH: ${{ steps.release-plan.outputs.target_branch }}
+          SOURCE_SHA: ${{ github.sha }}
+          VERSION_FILES: ${{ steps.release-line.outputs.version_files }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          read -r -a release_files <<< "$VERSION_FILES"
+          bump_args=()
+          if [[ "$RELEASE_MILESTONE" == *.x ]]; then
+            bump_args=(--bump-patch-for-minor-pre-major)
+          fi
+          if [[ "$RELEASE_BRANCH" != "$TARGET_BRANCH" ]]; then
+            git reset --hard "$SOURCE_SHA"
+          fi
+          current_version="$PLAN_CURRENT_VERSION"
+          uv run python utils/release.py plan \
+            --current-version "$current_version" \
+            --commits-json "$RUNNER_TEMP/release-commits.json" \
+            --files "${release_files[@]}" \
+            --apply "${bump_args[@]}"
+          uv run python utils/release.py normalize-changelog
+          uv run python utils/release.py prepare-line \
+            CHANGELOG.md .github/release-lines.json "$TARGET_BRANCH"
+
+      - name: Commit and push canonical release branch
+        if: steps.release-plan.outputs.enabled == 'true'
+        env:
+          RELEASE_BRANCH: ${{ steps.release-plan.outputs.branch }}
+          TARGET_BRANCH: ${{ steps.release-plan.outputs.target_branch }}
+          RELEASE_VERSION: ${{ steps.release-plan.outputs.version }}
+          VERSION_FILES: ${{ steps.release-line.outputs.version_files }}
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if ! git diff --quiet; then
+            read -r -a release_files <<< "$VERSION_FILES"
+            git add .github/release-lines.json CHANGELOG.md "${release_files[@]}"
+            git commit -m "chore(master): release $RELEASE_VERSION"
+          fi
+          git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          if [[ "$RELEASE_BRANCH" == "$TARGET_BRANCH" ]]; then
+            git push origin "HEAD:$RELEASE_BRANCH"
+          else
+            expected_sha="$(git ls-remote origin "refs/heads/$RELEASE_BRANCH" | awk '{print $1}')"
+            if [[ -z "$expected_sha" ]]; then
+              git push origin "HEAD:$RELEASE_BRANCH"
+            else
+              git push --force-with-lease="refs/heads/$RELEASE_BRANCH:$expected_sha" origin "HEAD:$RELEASE_BRANCH"
+            fi
+          fi
+
+      - name: Create or update canonical release PR
+        if: steps.release-plan.outputs.enabled == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_BRANCH: ${{ steps.release-plan.outputs.branch }}
+          RELEASE_TARGET_BRANCH: ${{ steps.release-line.outputs.release_target_branch }}
+          RELEASE_MILESTONE: ${{ steps.release-line.outputs.pr_milestone }}
+          RELEASE_VERSION: ${{ steps.release-plan.outputs.version }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          uv run python utils/release.py pr-body CHANGELOG.md "$RUNNER_TEMP/release-pr-body.md"
+          existing="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$RELEASE_BRANCH" --base "$RELEASE_TARGET_BRANCH" --state open --json number --jq '.[0].number // empty')"
+          title="chore(master): release $RELEASE_VERSION"
+          if [[ -n "$existing" ]]; then
+            gh pr edit "$existing" --repo "$GITHUB_REPOSITORY" --title "$title" --body-file "$RUNNER_TEMP/release-pr-body.md" --add-label "autorelease: pending" --milestone "$RELEASE_MILESTONE"
+          else
+            gh pr create --repo "$GITHUB_REPOSITORY" --base "$RELEASE_TARGET_BRANCH" --head "$RELEASE_BRANCH" --title "$title" --body-file "$RUNNER_TEMP/release-pr-body.md" --label "autorelease: pending" --milestone "$RELEASE_MILESTONE"
+          fi

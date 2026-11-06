@@ -1,0 +1,25 @@
+{
+  "name": "vext",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Ecossistema de extensões do Vectora: contrato, SDKs e extensões oficiais.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vectora-ltda/vext.git"
+  },
+  "packageManager": "pnpm@11.5.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "test": "pnpm -r --if-present run test",
+    "build": "pnpm -r --if-present run build"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.1",
+    "prettier": "3.9.9",
+    "typescript": "5.9.3"
+  }
+}

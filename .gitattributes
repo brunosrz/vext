@@ -1,0 +1,27 @@
+# Garante LF em todo texto — sem loop CRLF↔LF entre git checkout e Prettier no Windows.
+* text=auto eol=lf
+
+# Binários genuínos: sem conversão de linha.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.otf binary
+*.zip binary
+*.gz binary
+*.tar binary
+*.tgz binary
+*.vext binary
+*.whl binary
+*.pdf binary
+*.mjs -text
+
+# Lockfiles gerados não contam como linguagem do projeto.
+pnpm-lock.yaml linguist-generated
+uv.lock linguist-generated

@@ -1,0 +1,85 @@
+language: pt-BR
+
+reviews:
+  profile: chill
+  request_changes_workflow: true
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: false
+  auto_review:
+    enabled: true
+    drafts: false
+    auto_incremental_review: true
+    # Revisa todas as branches de destino, inclusive as de release.
+    base_branches:
+      - ".*"
+    # Mantém a revisão incremental elegível após cada push.
+    auto_pause_after_reviewed_commits: 0
+  path_instructions:
+    - path: "**"
+      instructions: |
+        Revise o comportamento entregue e a sua evidência. Testes são parte do
+        contrato da mudança: para cada comportamento novo ou corrigido, procure
+        pelo menos um teste de caminho feliz, um teste negativo ou de erro e um
+        teste de regressão que falhe sem a correção. Não considere um teste
+        superficial que apenas executa o código como cobertura suficiente;
+        verifique asserções sobre estado, efeitos e contratos.
+
+        Confira se o PR mantém o contrato (manifesto `vectora-extension.json` e
+        protocolo JSON-RPC) em `schemas/` e se os dois SDKs, TypeScript e
+        Python, continuam equivalentes. Aponte drift entre os SDKs, mudança
+        incompatível de API pública sem bump de versão e nota, e exports que
+        não são intencionais. Toda mudança de contrato exige teste de
+        conformidade nos dois SDKs.
+
+        Capabilities são negadas por padrão: aponte qualquer caminho em que o
+        SDK ou uma extensão oficial amplie uma permissão além do que o
+        manifesto declara. Mensagens JSON-RPC, manifestos e pacotes `.vext`
+        são entrada hostil: exija validação por schema, limites de tamanho e
+        rejeição de caminhos fora da raiz do pacote (traversal).
+
+        Verifique limites e falhas: entradas vazias ou inválidas, mensagens
+        malformadas, timeouts, cancelamento, retry, duplicação, limites de
+        tamanho e respostas parciais. Confirme que erros não vazam segredos
+        nem deixam estado parcialmente persistido.
+
+        Para dependências, exija justificativa: cada dependência do SDK entra
+        no pacote de quem o usa. Para publicação, confirme que ela só sai
+        pelo pipeline, com proveniência e as duas linguagens na mesma versão.
+
+        Para mudanças de CI, scripts ou configuração, verifique execução em
+        Windows, Linux e macOS quando suportado, quoting, códigos de saída,
+        cache, artefatos e se o gate realmente falha quando a prova necessária
+        não está disponível. Não trate uma execução anterior ou um resultado
+        informado no PR como evidência do commit atual.
+
+        Seja crítico quanto a escopo: não peça refatorações sem relação, mas
+        não aceite marcar uma issue como concluída quando a implementação só
+        cobre um dos SDKs ou o caminho feliz. Em cada achado, indique o
+        arquivo, o cenário que reproduz o problema e a prova/teste que deve
+        ser acrescentado ou corrigido.
+
+    - path: "**/test/**"
+      instructions: |
+        Verifique se os testes têm asserções fortes e isolam efeitos externos.
+        Procure testes negativos, de regressão, limites, cancelamento e
+        recuperação, conforme o comportamento coberto. Rejeite testes que
+        apenas verificam ausência de exceção ou mocks sem confirmar os
+        argumentos e os efeitos observáveis.
+
+    - path: ".github/workflows/**"
+      instructions: |
+        Confira se os gates executam a suíte correta, propagam falhas, usam
+        versões suportadas e publicam artefatos úteis. Publicação (npm e PyPI)
+        deve usar trusted publishing com `id-token: write` só no job que
+        publica, e nunca em PRs. Mudanças de workflow devem incluir uma prova
+        negativa quando alteram um gate ou uma condição de falha.
+
+chat:
+  auto_reply: true
+  art: false
+
+knowledge_base:
+  code_guidelines:
+    enabled: true
