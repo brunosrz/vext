@@ -1,11 +1,11 @@
 {
   "version_files": ["packages/sdk/package.json", "python/pyproject.toml"],
   "development": {
-    "branch": "release/0.2",
-    "milestone": "0.2"
+    "branch": "release/0.1",
+    "milestone": "0.1"
   },
   "maintenance": {
     "branch": "master",
-    "milestone": "0.1.x"
+    "milestone": "0.0.x"
   }
 }

@@ -35,7 +35,7 @@ especificação antes do PR e de testes de conformidade nos dois SDKs.
 ## Linhas de release
 
 As linhas ativas estão em `.github/release-lines.json`: `master` é a linha de
-manutenção (milestone `0.1.x`) e `release/0.2` é a linha de desenvolvimento
+manutenção (milestone `0.0.x`) e `release/0.1` é a linha de desenvolvimento
 (milestone `0.2`). Escolha a milestone antes da aprovação: o workflow
 `PR Release Milestone` verifica a combinação entre base, milestone e tipo de
 mudança e bloqueia as incompatíveis.

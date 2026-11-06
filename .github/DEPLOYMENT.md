@@ -12,7 +12,7 @@
 
 A tag só sai depois de a publicação npm passar e a publicação PyPI passar ou
 ser explicitamente desabilitada. Os SDKs compartilham a mesma versão. O primeiro
-`0.0.1` é um bootstrap sem API utilizável; o disparo manual existe para concluir
+`0.0.1` é o primeiro bootstrap sem API utilizável; o disparo manual existe para concluir
 essa publicação inicial depois que o PR chegar a `master`.
 
 ## Pré-requisitos do repositório
@@ -22,9 +22,9 @@ essa publicação inicial depois que o PR chegar a `master`.
   consegue abrir o PR de release (`GitHub Actions is not permitted to create or
 approve pull requests`).
 - **Label `autorelease: pending`:** criado pelo próprio workflow.
-- **Milestones `0.1.x` e `0.2`:** o workflow `PR Release Milestone` cria a
+- **Milestones `0.0.x` e `0.1`:** o workflow `PR Release Milestone` cria a
   milestone da linha quando ela falta.
-- **Branch `release/0.2`:** é a linha de desenvolvimento definida em
+- **Branch `release/0.1`:** é a próxima linha de desenvolvimento definida em
   `.github/release-lines.json`. Ela precisa existir de antemão; depois da
   primeira release minor a rotação passa a criar a próxima sozinha.
 

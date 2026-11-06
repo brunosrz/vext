@@ -78,8 +78,8 @@ def test_missing_branch_skips_release_workflows() -> None:
 def _write_config(path: Path, **overrides: object) -> Path:
     payload: dict[str, object] = {
         "version_files": ["package.json"],
-        "development": {"branch": "release/0.2", "milestone": "0.2"},
-        "maintenance": {"branch": "master", "milestone": "0.1.x"},
+        "development": {"branch": "release/0.1", "milestone": "0.1"},
+        "maintenance": {"branch": "master", "milestone": "0.0.x"},
     }
     payload.update(overrides)
     path.write_text(json.dumps(payload), encoding="utf-8")
@@ -92,11 +92,11 @@ def test_invalid_configuration_is_rejected(tmp_path: Path) -> None:
 
     assert load_release_lines(_write_config(path)).version_files == ("package.json",)
 
-    same_branch = {"branch": "same", "milestone": "0.2"}
+    same_branch = {"branch": "same", "milestone": "0.1"}
     _write_config(
         path,
         development=same_branch,
-        maintenance={"branch": "same", "milestone": "0.1.x"},
+        maintenance={"branch": "same", "milestone": "0.0.x"},
     )
     with pytest.raises(ValueError, match="must differ"):
         load_release_lines(path)
@@ -114,7 +114,7 @@ def test_invalid_configuration_is_rejected(tmp_path: Path) -> None:
         path,
         maintenance={
             "branch": "master",
-            "milestone": "0.1.x",
+            "milestone": "0.0.x",
             "release_please_manifest": "manifest.json",
         },
     )
@@ -1274,24 +1274,24 @@ def test_preserves_newline_style_and_unchanged_content(tmp_path: Path) -> None:
 
 def test_stacked_pr_uses_the_milestone_of_the_release_line_at_the_stack_root() -> None:
     """Uma PR cuja base é a branch de outra PR aberta herda a linha da raiz."""
-    event = _event(base="fix/migrate-open-source", milestone="0.1.x")
+    event = _event(base="fix/migrate-open-source", milestone="0.0.x")
 
     assert release.validate_pull_request(event, stack_root_base="master") == []
 
 
 def test_stacked_pr_on_the_development_line_needs_the_development_milestone() -> None:
-    event = _event(base="docs/feature", milestone="0.2")
+    event = _event(base="docs/feature", milestone="0.1")
 
-    assert release.validate_pull_request(event, stack_root_base="release/0.2") == []
+    assert release.validate_pull_request(event, stack_root_base="release/0.1") == []
 
 
 def test_stacked_pr_rejects_the_milestone_of_another_line() -> None:
-    event = _event(base="docs/feature", milestone="0.2")
+    event = _event(base="docs/feature", milestone="0.1")
 
     errors = release.validate_pull_request(event, stack_root_base="master")
 
     assert len(errors) == 1
-    assert "0.1.x" in errors[0]
+    assert "0.0.x" in errors[0]
 
 
 def test_stacked_pr_without_milestone_asks_for_the_root_line_milestone() -> None:
@@ -1300,11 +1300,11 @@ def test_stacked_pr_without_milestone_asks_for_the_root_line_milestone() -> None
     errors = release.validate_pull_request(event, stack_root_base="master")
 
     assert len(errors) == 1
-    assert "`0.1.x`" in errors[0]
+    assert "`0.0.x`" in errors[0]
 
 
 def test_stack_root_that_is_not_a_release_line_is_rejected() -> None:
-    event = _event(base="docs/feature", milestone="0.1.x")
+    event = _event(base="docs/feature", milestone="0.0.x")
 
     errors = release.validate_pull_request(event, stack_root_base="other/branch")
 
@@ -1313,14 +1313,14 @@ def test_stack_root_that_is_not_a_release_line_is_rejected() -> None:
 
 
 def test_unresolved_stack_root_keeps_rejecting_unknown_bases() -> None:
-    event = _event(base="docs/feature", milestone="0.1.x")
+    event = _event(base="docs/feature", milestone="0.0.x")
 
     assert release.validate_pull_request(event, stack_root_base="")
     assert release.validate_pull_request(event)
 
 
 def test_fork_head_never_inherits_the_stack_root_line() -> None:
-    event = _event(base="docs/feature", milestone="0.1.x", head_repo="someone/vectora")
+    event = _event(base="docs/feature", milestone="0.0.x", head_repo="someone/vectora")
 
     errors = release.validate_pull_request(event, stack_root_base="master")
 
@@ -1333,7 +1333,7 @@ def test_stack_root_is_read_from_the_environment(
 ) -> None:
     event_file = tmp_path / "event.json"
     event_file.write_text(
-        json.dumps(_event(base="docs/feature", milestone="0.1.x")), encoding="utf-8"
+        json.dumps(_event(base="docs/feature", milestone="0.0.x")), encoding="utf-8"
     )
     monkeypatch.setenv("GITHUB_EVENT_PATH", str(event_file))
     monkeypatch.setenv("CURRENT_STACK_ROOT_BASE", "master")
