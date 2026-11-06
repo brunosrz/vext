@@ -1,5 +1,5 @@
 {
-  "version_files": ["package.json"],
+  "version_files": ["packages/sdk/package.json", "python/pyproject.toml"],
   "development": {
     "branch": "release/0.2",
     "milestone": "0.2"

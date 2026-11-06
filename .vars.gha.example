@@ -1,0 +1,6 @@
+# Repository variables (Settings → Secrets and variables → Actions → Variables).
+# Nunca coloque tokens ou valores secretos neste arquivo.
+
+# Habilita a publicação do SDK Python após o SDK TypeScript.
+# Configure o trusted publisher OIDC do projeto no PyPI e o Environment `pypi`.
+PUBLISH_PYPI=true
