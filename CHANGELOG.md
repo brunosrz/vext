@@ -1,3 +1,13 @@
+## [0.0.2] (2026-11-06)
+
+Esta seção reúne as alterações publicadas nesta versão.
+
+### Bug Fixes
+
+As correções incluídas nesta versão são listadas abaixo.
+
+- fix(release): rename TypeScript SDK package (#16)
+
 ## [0.0.1] (2026-11-06)
 
 Esta seção reúne as alterações publicadas nesta versão.

@@ -1,6 +1,6 @@
 {
   "name": "@vectora-ai/vext-sdk",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Alpha bootstrap for the future Vext extension SDK; no stable API yet.",
   "repository": {
     "type": "git",
