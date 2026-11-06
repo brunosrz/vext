@@ -28,13 +28,22 @@ approve pull requests`).
   `.github/release-lines.json`. Ela precisa existir de antemão; depois da
   primeira release minor a rotação passa a criar a próxima sozinha.
 
+Crie os GitHub Environments com estes nomes exatos:
+
+- `npm` — obrigatório; usado por `publish-npm`. Guarde nele `NPM_TOKEN` para
+  criar o pacote inicial, se necessário. Depois da configuração de trusted
+  publishing, remova o token.
+- `pypi` — usado por `publish-pypi` quando `PUBLISH_PYPI=true`; configure-o
+  como Environment do trusted publisher no PyPI. Não precisa de token secreto.
+
 ## Publicação
 
-**npm (obrigatória).** Configure `@vext/sdk` para confiar neste repositório e
-no workflow `vext.yml`, com o Environment `npm`. Para o primeiro publish, se
-o trusted publisher não puder criar o pacote ainda inexistente, cadastre o
-secret `NPM_TOKEN` no Environment `npm` (token granular, somente publicação).
-Remova-o depois de configurar e validar trusted publishing.
+**npm (obrigatória).** O workflow usa o Environment `npm` e publica apenas
+`@vext/sdk` com proveniência. Para o bootstrap inicial, se trusted publishing
+não puder criar o pacote ainda inexistente, cadastre `NPM_TOKEN` como secret
+desse Environment, usando um token granular de publicação. Configure depois o
+trusted publisher do npm para este repositório, workflow `vext.yml` e
+Environment `npm`; então remova o token.
 
 **PyPI (opcional).** Cadastre o repositório como publisher confiável do projeto
 no PyPI, com o Environment `pypi`, e defina a variável de repositório

@@ -78,10 +78,8 @@ jobs:
   publish-npm:
     name: Publish TypeScript SDK (npm)
     needs: [verify, verify-python]
-    # workflow_dispatch permite repetir a publicação pela aba Actions; o
-    # github.ref fica travado em master para um disparo manual de outra
-    # branch nunca publicar. O pnpm ignora versões que já estão no npm, então
-    # repetir é seguro.
+    # workflow_dispatch permite publicar o bootstrap a partir de master; uma
+    # execução manual em outra branch nunca publica.
     if: >-
       github.ref == 'refs/heads/master' &&
       (github.event_name == 'workflow_dispatch' ||
@@ -129,7 +127,7 @@ jobs:
 
   publish-pypi:
     name: Publish Python SDK (PyPI)
-    needs: [verify, verify-python]
+    needs: [publish-npm]
     if: >-
       vars.PUBLISH_PYPI == 'true' &&
       github.ref == 'refs/heads/master' &&

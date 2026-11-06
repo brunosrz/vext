@@ -1,6 +1,14 @@
+# GitHub Environments (Settings → Environments; são ambientes, não variáveis):
+# - npm: obrigatório; o job `publish-npm` usa exatamente esse nome.
+# - pypi: usado pelo job `publish-pypi` quando PUBLISH_PYPI=true.
+# No Environment `npm`, configure o secret NPM_TOKEN para o bootstrap inicial
+# se ainda não houver trusted publishing. Depois, prefira OIDC e remova o token.
+# No PyPI, configure `vectora-ltda/vext`, workflow `vext.yml` e Environment
+# `pypi` como trusted publisher; não é necessário secret de token.
+
 # Repository variables (Settings → Secrets and variables → Actions → Variables).
-# Nunca coloque tokens ou valores secretos neste arquivo.
+# Nunca coloque tokens ou outros valores secretos neste arquivo.
 
 # Habilita a publicação do SDK Python após o SDK TypeScript.
-# Configure o trusted publisher OIDC do projeto no PyPI e o Environment `pypi`.
+# Define se o job de publicação no PyPI deve rodar.
 PUBLISH_PYPI=true
