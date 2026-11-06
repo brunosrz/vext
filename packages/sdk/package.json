@@ -1,6 +1,6 @@
 {
   "name": "@vext/sdk",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Alpha bootstrap for the future Vext extension SDK; no stable API yet.",
   "repository": {
     "type": "git",
@@ -19,7 +19,10 @@
       "import": "./dist/sandbox.js"
     }
   },
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
