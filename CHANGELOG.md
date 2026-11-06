@@ -14,6 +14,7 @@ Os recursos incluídos nesta versão são listados abaixo.
 
 As correções incluídas nesta versão são listadas abaixo.
 
+- fix(ci): publish npm package through npm cli (#13)
 - fix(release): align bootstrap and next minor lines
 - fix: use a single production release environment (#11)
 - fix(ci): preservar a label de caminho na reconciliação do labeler (#4)
