@@ -1,6 +1,6 @@
 {
   "name": "@vext/sdk",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Alpha bootstrap for the future Vext extension SDK; no stable API yet.",
   "repository": {
     "type": "git",
