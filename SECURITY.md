@@ -13,7 +13,7 @@ would expose the problem before a fix is available.
 
 **How to report:**
 
-1. Open a [GitHub Security Advisory](https://github.com/vectora-ltda/vext/security/advisories/new) (private)
+1. Open a [GitHub Security Advisory](https://github.com/vectora-company/vext/security/advisories/new) (private)
 2. Include: affected package or extension, vulnerability type, steps to
    reproduce, estimated impact
 
