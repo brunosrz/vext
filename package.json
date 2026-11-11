@@ -6,7 +6,7 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/vectora-ltda/vext.git"
+    "url": "git+https://github.com/vectora-company/vext.git"
   },
   "packageManager": "pnpm@11.5.0",
   "engines": {
