@@ -4,7 +4,7 @@
   "description": "Alpha bootstrap for the future Vext extension SDK; no stable API yet.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/vectora-ltda/vext.git",
+    "url": "https://github.com/vectora-company/vext.git",
     "directory": "packages/sdk"
   },
   "type": "module",
